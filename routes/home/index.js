@@ -76,11 +76,17 @@ export default () => {
   return html`
     <main class=${styles}>
       <article>
-        <${Editor}
-          value=${code}
-          style=${{ lineHeight: '138%' }}
-          onValueChange=${code => setCode(code)}
-        />
+        ${code.length < 200000 || window.location.hash === '#supercomputer'
+          ? html`
+              <${Editor}
+                value=${code}
+                style=${{ lineHeight: '138%' }}
+                onValueChange=${code => setCode(code)}
+              />
+            `
+          : html`
+              <pre>${code}</pre>
+            `}
       </article>
       <aside>
         <h1 onClick=${() => history.pushState(null, null, '?' + entry)}>
@@ -104,7 +110,8 @@ export default () => {
                       null,
                       '?' +
                         (x.startsWith('./')
-                          ? entry.replace(/\/.*\.js/, '') + x.replace('./', '/')
+                          ? entry.replace(/\/[^\/]*\.js/, '') +
+                            x.replace('./', '/')
                           : x.replace('https://unpkg.com/', ''))
                     )}
                 >
