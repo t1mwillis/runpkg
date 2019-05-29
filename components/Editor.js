@@ -712,7 +712,6 @@ var styles = {
   },
   highlight: {
     position: 'relative',
-    pointerEvents: 'none',
   },
   editor: {
     margin: 0,
@@ -737,6 +736,32 @@ var styles = {
   },
 };
 
+// (this.type = e),
+//         (this.content = a),
+//         (this.alias = t),
+//         (this.length = 0 | (n || '').length),
+//         (this.greedy = !!r);
+//         (this.isATag = isATag || null)
+
+//here
+const isPreviousAFromOrRequire = (c, index, a, M) => {
+  const prev = a[index - 2];
+  if (
+    typeof prev === 'object' &&
+    (prev.content === 'from' || prev.content === 'require')
+  ) {
+    return new M(
+      c.type,
+      c.content,
+      c.alias,
+      c.length,
+      c.greedy,
+      (c.isATag = true)
+    );
+  }
+  return c;
+};
+
 /* PrismJS 1.16.0
 https://prismjs.com/download.html#themes=prism-tomorrow&languages=clike+javascript */
 var _self =
@@ -756,7 +781,14 @@ var _self =
         util: {
           encode: function(e) {
             return e instanceof M
-              ? new M(e.type, C.util.encode(e.content), e.alias)
+              ? new M(
+                  e.type,
+                  C.util.encode(e.content),
+                  e.alias,
+                  e.length,
+                  e.greedy,
+                  e.isATag ? e.isATag : null
+                )
               : Array.isArray(e)
               ? e.map(C.util.encode)
               : e
@@ -898,13 +930,18 @@ var _self =
             else o(C.util.encode(l.code));
           else C.hooks.run('complete', l);
         },
-        highlight: function(e, a, t) {
+        highlight: function(e, a, t, f) {
           var n = { code: e, grammar: a, language: t };
           return (
             C.hooks.run('before-tokenize', n),
             (n.tokens = C.tokenize(n.code, n.grammar)),
+            C.hooks.run('before-after-tokenize', n),
+            // here
+            n.tokens.map((x, index, array) =>
+              isPreviousAFromOrRequire(x, index, array, M)
+            ),
             C.hooks.run('after-tokenize', n),
-            M.stringify(C.util.encode(n.tokens), n.language)
+            M.stringify(C.util.encode(n.tokens), n.language, f)
           );
         },
         matchGrammar: function(e, a, t, n, r, i, l) {
@@ -992,16 +1029,18 @@ var _self =
         },
         Token: M,
       };
-    function M(e, a, t, n, r) {
+    //here
+    function M(e, a, t, n, r, isATag) {
       (this.type = e),
         (this.content = a),
         (this.alias = t),
         (this.length = 0 | (n || '').length),
         (this.greedy = !!r);
+      this.isATag = isATag || null;
     }
     if (
       ((g.Prism = C),
-      (M.stringify = function(a, t, e) {
+      (M.stringify = function(a, t, e, f) {
         if ('string' == typeof a) return a;
         if (Array.isArray(a))
           return a
@@ -1030,6 +1069,31 @@ var _self =
             );
           })
           .join(' ');
+        if (a.isATag) {
+          return (
+            '<' +
+            'a' +
+            ' onClick="' +
+            `${() => history.pushState(null, null, `?${'b'}@${3}${'/b'}`)}` +
+            '"' +
+            ' ' +
+            '>' +
+            '<' +
+            n.tag +
+            ' class="' +
+            n.classes.join(' ') +
+            '"' +
+            (i ? ' ' + i : '') +
+            '>' +
+            n.content +
+            '</' +
+            n.tag +
+            '>' +
+            '</' +
+            'a' +
+            '>'
+          );
+        }
         return (
           '<' +
           n.tag +
@@ -1241,7 +1305,8 @@ export default props =>
       highlight=${code =>
         Prism.highlight(
           code,
-          Prism.languages[extensions[props.extension] || 'javascript']
+          Prism.languages[extensions[props.extension] || 'javascript'],
+          props.file
         )}
       ...${props}
     />

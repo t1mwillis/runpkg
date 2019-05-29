@@ -21,6 +21,7 @@ export default ({ file }) => html`
       }}
       padding=${42}
       readOnly
+      file=${file}
     />
     <pre key="pre">${file.code.slice(100000)}</pre>
   </article>

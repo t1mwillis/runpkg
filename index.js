@@ -93,6 +93,7 @@ const Home = () => {
         : isEmpty(file)
         ? null
         : html`
+            ${console.log(file)}
             <${Nav} file=${file} />
             <${Article} file=${file} />
             <${Aside} file=${file} />
