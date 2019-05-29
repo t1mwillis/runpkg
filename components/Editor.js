@@ -108,7 +108,8 @@ var cssText =
   className +
   ' {\n    color: transparent !important;\n  }\n\n  .' +
   className +
-  '::selection {\n    background-color: #accef7 !important;\n    color: transparent !important;\n  }\n}\n';
+  '::selection {\n    background-color: #accef7 !important;\n    color: transparent !important;\n  }\n}\n' +
+  '\n .import > span:hover {\n text-decoration: underline;}\n .import.ctrl > span {\n text-decoration: underline;}\n';
 
 var Editor = (function(_React$Component) {
   _inherits(Editor, _React$Component);
@@ -531,6 +532,39 @@ var Editor = (function(_React$Component) {
         stack: [],
         offset: -1,
       }),
+      (_this._ctrlKeyHandler = function(e) {
+        document.addEventListener('keydown', event => {
+          const imports = document.querySelectorAll('.import');
+          if (event.keyCode === 91 || event.keyCode === 17) {
+            imports.forEach(x => x.classList.add('ctrl'));
+          }
+        });
+        document.addEventListener('keyup', event => {
+          const imports = document.querySelectorAll('.import');
+          if (event.keyCode === 91 || event.keyCode === 17) {
+            imports.forEach(x => x.classList.remove('ctrl'));
+          }
+        });
+      }),
+      (_this._listenForClicks = function(e) {
+        const imports = document.querySelectorAll('.import');
+        imports.append;
+        // potentially refactor so not event listeners for all
+        imports.forEach(x =>
+          x.addEventListener('click', event => {
+            const path = event.srcElement.innerHTML
+              .replace(/'/g, '')
+              .replace('./', '/');
+            if (path.startsWith('/')) {
+              const url = `?${_this.props.file.url
+                .split('/')
+                .slice(3, 4)
+                .join('/') + path}`;
+              history.pushState(null, null, url);
+            }
+          })
+        );
+      }),
       _temp)),
       _possibleConstructorReturn(_this, _ret)
     );
@@ -541,6 +575,21 @@ var Editor = (function(_React$Component) {
       key: 'componentDidMount',
       value: function componentDidMount() {
         this._recordCurrentState();
+        this._listenForClicks();
+        this._ctrlKeyHandler();
+      },
+    },
+    {
+      key: 'componentDidUpdate',
+      value: function componentDidUpdate() {
+        this._listenForClicks();
+      },
+    },
+    {
+      key: 'componentWillUnmount',
+      value: function componentWillUnmount() {
+        document.removeEventListener('click', event);
+        document.removeEventListener('keydown', event);
       },
     },
     {
@@ -736,18 +785,11 @@ var styles = {
   },
 };
 
-// (this.type = e),
-//         (this.content = a),
-//         (this.alias = t),
-//         (this.length = 0 | (n || '').length),
-//         (this.greedy = !!r);
-//         (this.isATag = isATag || null)
-
-//here
 const isPreviousAFromOrRequire = (c, index, a, M) => {
   const prev = a[index - 2];
   if (
-    typeof prev === 'object' &&
+    prev instanceof M &&
+    c instanceof M &&
     (prev.content === 'from' || prev.content === 'require')
   ) {
     return new M(
@@ -1073,10 +1115,7 @@ var _self =
           return (
             '<' +
             'a' +
-            ' onClick="' +
-            `${() => history.pushState(null, null, `?${'b'}@${3}${'/b'}`)}` +
-            '"' +
-            ' ' +
+            ' class="import"' +
             '>' +
             '<' +
             n.tag +
@@ -1305,8 +1344,7 @@ export default props =>
       highlight=${code =>
         Prism.highlight(
           code,
-          Prism.languages[extensions[props.extension] || 'javascript'],
-          props.file
+          Prism.languages[extensions[props.extension] || 'javascript']
         )}
       ...${props}
     />
